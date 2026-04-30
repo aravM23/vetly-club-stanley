@@ -1,19 +1,29 @@
+import { Route, Routes } from 'react-router-dom'
+import AuthPage from '@/pages/Auth'
+import DashboardPage from '@/pages/Dashboard'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
+
 export default function App() {
   return (
-    <main className="min-h-screen px-8 py-16">
-      <div className="mx-auto max-w-3xl space-y-6">
-        <p className="smallcaps text-paper-mute">Vetly</p>
-        <h1 className="font-display text-5xl text-paper">
-          AI Creator vetting, every morning.
-        </h1>
-        <p className="text-paper-mute">
-          The repo skeleton is up. Next: Supabase, auth, ingest, scoring, digest.
-        </p>
-        <div className="flex items-center gap-3 pt-4">
-          <span className="score-badge">92</span>
-          <span className="font-mono text-sm text-paper-mute">@example.creator</span>
-        </div>
-      </div>
+    <Routes>
+      <Route path="/auth" element={<AuthPage />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  )
+}
+
+function NotFound() {
+  return (
+    <main className="min-h-screen grid place-items-center">
+      <p className="font-display text-3xl text-paper">404</p>
     </main>
   )
 }
