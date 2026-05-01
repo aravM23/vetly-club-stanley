@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import AuthPage from '@/pages/Auth'
 import DashboardPage from '@/pages/Dashboard'
+import DigestPage from '@/pages/Digest'
 import ImportPage from '@/pages/Import'
 import SettingsPage from '@/pages/Settings'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -22,6 +23,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <ImportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/digest"
+        element={
+          <ProtectedRoute>
+            <DigestPage />
           </ProtectedRoute>
         }
       />
