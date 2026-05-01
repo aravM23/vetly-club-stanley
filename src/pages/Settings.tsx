@@ -26,7 +26,6 @@ import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 
 type SettingsRow = {
-  product_description: string | null
   icp_description: string | null
   follower_min: number | null
   follower_max: number | null
@@ -39,7 +38,6 @@ type SettingsRow = {
 }
 
 type FormState = {
-  productDescription: string
   icpDescription: string
   followerMin: string
   followerMax: string
@@ -67,7 +65,7 @@ export default function SettingsPage() {
     supabase
       .from('user_settings')
       .select(
-        'product_description, icp_description, follower_min, follower_max, min_engagement_rate, recipient_email, daily_send_enabled, daily_send_hour, digest_size, webhook_secret'
+        'icp_description, follower_min, follower_max, min_engagement_rate, recipient_email, daily_send_enabled, daily_send_hour, digest_size, webhook_secret'
       )
       .eq('user_id', user.id)
       .single<SettingsRow>()
@@ -80,7 +78,6 @@ export default function SettingsPage() {
         }
         setWebhookSecret(data.webhook_secret)
         setForm({
-          productDescription: data.product_description ?? '',
           icpDescription: data.icp_description ?? '',
           followerMin: data.follower_min == null ? '' : String(data.follower_min),
           followerMax: data.follower_max == null ? '' : String(data.follower_max),
@@ -120,7 +117,6 @@ export default function SettingsPage() {
     const { error } = await supabase
       .from('user_settings')
       .update({
-        product_description: nullIfEmpty(form.productDescription),
         icp_description: nullIfEmpty(form.icpDescription),
         follower_min: followerMin,
         follower_max: followerMax,
@@ -157,28 +153,16 @@ export default function SettingsPage() {
         </div>
 
         <Section
-          title="Product and ICP"
-          hint="The model uses these every time it scores a Creator. Be specific."
+          title="Ideal Creator profile"
+          hint="The model uses this every time it scores a Creator. Be specific about niche, voice, audience, and what disqualifies a fit."
         >
           <div className="space-y-2">
-            <Label htmlFor="product" className="smallcaps text-paper-mute">
-              Product description
-            </Label>
-            <Textarea
-              id="product"
-              rows={5}
-              value={form.productDescription}
-              onChange={(e) => setForm({ ...form, productDescription: e.target.value })}
-              className="bg-ink-2 border-ink-3 text-paper"
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="icp" className="smallcaps text-paper-mute">
-              Ideal Creator profile
+              ICP
             </Label>
             <Textarea
               id="icp"
-              rows={5}
+              rows={6}
               value={form.icpDescription}
               onChange={(e) => setForm({ ...form, icpDescription: e.target.value })}
               className="bg-ink-2 border-ink-3 text-paper"

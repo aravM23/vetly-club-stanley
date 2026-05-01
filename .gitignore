@@ -21,6 +21,9 @@ dist-ssr
 supabase/.branches
 supabase/.temp
 
+# One-shot debugging SQL, kept local
+supabase/diagnostics/
+
 # Claude Code (local-only)
 .claude/
 
