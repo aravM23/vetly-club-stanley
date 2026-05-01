@@ -56,9 +56,22 @@ const FIELD_DEFINITIONS: Array<{
   required?: boolean
 }> = [
   {
+    // /^name$/i is intentionally NOT here. Lessee's CSV order is
+    // "Name, Handle, ..." and a "Name" pattern in handle would auto-map
+    // Name to handle, leaking the display name into creators.handle. Name
+    // belongs strictly to display_name.
     field: 'handle',
     label: 'Handle',
-    patterns: [/^@?handle$/i, /^username$/i, /^user$/i, /^screen_?name$/i, /^name$/i],
+    patterns: [
+      /^@?handle$/i,
+      /^username$/i,
+      /^user$/i,
+      /^screen_?name$/i,
+      /^account$/i,
+      /^ig$/i,
+      /^instagram$/i,
+      /^@$/,
+    ],
     required: true,
   },
   {
@@ -74,7 +87,7 @@ const FIELD_DEFINITIONS: Array<{
   {
     field: 'display_name',
     label: 'Display name',
-    patterns: [/^display_?name$/i, /^full_?name$/i],
+    patterns: [/^display_?name$/i, /^full_?name$/i, /^name$/i, /^creator(_?name)?$/i],
   },
   { field: 'bio', label: 'Bio', patterns: [/^bio$/i, /^description$/i, /^about$/i] },
   {

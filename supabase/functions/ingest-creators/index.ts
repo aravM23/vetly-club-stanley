@@ -248,7 +248,17 @@ async function readRows(req: Request, contentType: string): Promise<RawRow[]> {
 // the source and the explicit value will win.
 const DEFAULT_PLATFORM = 'instagram'
 
-function normalizeRow(raw: RawRow): NormalizedRow {
+function normalizeRow(input: RawRow): NormalizedRow {
+  // /import sends rows shaped {handle, platform, ..., raw: <original CSV row>}.
+  // External callers (curl, Manus, Lessee directly) send the row at the top
+  // level. Detect the wrapper and unwrap so the rest of normalization
+  // operates on the actual CSV row uniformly, AND so creators.raw stores
+  // the original row (not the wrapped shape) for clean downstream queries.
+  const raw: RawRow =
+    input.raw && typeof input.raw === 'object' && !Array.isArray(input.raw)
+      ? (input.raw as RawRow)
+      : input
+
   const get = (...keys: string[]) => firstString(raw, keys)
 
   // Pass 1: scan every cell for an instagram.com / tiktok.com URL or an
