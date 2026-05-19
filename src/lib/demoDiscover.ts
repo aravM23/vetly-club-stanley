@@ -656,21 +656,57 @@ function saveState(state: StoreShape) {
 function freshState(): StoreShape {
   return {
     candidates: SEED_CANDIDATES.map((c) => ({ ...c })),
-    runs: [
-      {
-        id: 1,
-        status: 'completed',
-        sources_used: ['hashtag', 'brand_mention', 'similar_account', 'llm_brainstorm'],
-        raw_count: 47,
-        deduped_count: 32,
-        hydrated_count: 24,
-        scored_count: 12,
-        started_at: minutesAgo(8),
-        completed_at: minutesAgo(7),
-        error_message: null,
-      },
-    ],
+    // Seed ~2 weeks of historical runs so the Sourcing metrics page has a
+    // believable activity chart, funnel, and trend deltas on first load.
+    // Newest first (the API contract is reverse-chronological).
+    runs: HISTORICAL_RUNS.map((r) => ({ ...r })),
     settings: { ...SEED_SETTINGS },
+  }
+}
+
+/**
+ * 14 days of plausible run history. Counts taper toward older runs (smaller
+ * source set initially) and grow as the system was tuned. Funnel ratios stay
+ * realistic: ~70% dedupe survival, ~75% hydrate survival, ~65% score survival.
+ */
+const HISTORICAL_RUNS: DiscoverRun[] = [
+  // Most recent — matches the seeded candidates
+  mkRun(13, 0, 6, { raw: 47, dedup: 32, hydrated: 24, scored: 12 }),
+  mkRun(12, 1, 4, { raw: 41, dedup: 28, hydrated: 21, scored: 11 }),
+  mkRun(11, 2, 9, { raw: 44, dedup: 30, hydrated: 22, scored: 13 }),
+  mkRun(10, 3, 3, { raw: 38, dedup: 26, hydrated: 19, scored: 10 }),
+  mkRun(9, 4, 18, { raw: 52, dedup: 35, hydrated: 26, scored: 15 }),
+  mkRun(8, 5, 11, { raw: 36, dedup: 24, hydrated: 18, scored: 9 }),
+  mkRun(7, 6, 7, { raw: 39, dedup: 27, hydrated: 20, scored: 10 }),
+  mkRun(6, 7, 22, { raw: 33, dedup: 22, hydrated: 16, scored: 8 }),
+  mkRun(5, 9, 14, { raw: 31, dedup: 21, hydrated: 15, scored: 7 }),
+  mkRun(4, 10, 5, { raw: 28, dedup: 19, hydrated: 14, scored: 7 }),
+  mkRun(3, 11, 20, { raw: 26, dedup: 18, hydrated: 13, scored: 6 }),
+  mkRun(2, 13, 3, { raw: 22, dedup: 15, hydrated: 11, scored: 5 }),
+  mkRun(1, 13, 19, { raw: 19, dedup: 13, hydrated: 9, scored: 4 }),
+]
+
+function mkRun(
+  id: number,
+  daysBack: number,
+  hourOfDay: number,
+  counts: { raw: number; dedup: number; hydrated: number; scored: number }
+): DiscoverRun {
+  const started = new Date()
+  started.setDate(started.getDate() - daysBack)
+  started.setHours(hourOfDay, 12, 0, 0)
+  const completed = new Date(started.getTime() + 62_000)
+  return {
+    id,
+    status: 'completed',
+    sources_used: ['hashtag', 'brand_mention', 'similar_account', 'llm_brainstorm'],
+    raw_count: counts.raw,
+    deduped_count: counts.dedup,
+    hydrated_count: counts.hydrated,
+    scored_count: counts.scored,
+    started_at: started.toISOString(),
+    completed_at: completed.toISOString(),
+    error_message: null,
   }
 }
 
@@ -773,9 +809,6 @@ function now(): string {
 }
 function hoursAgo(h: number): string {
   return new Date(Date.now() - h * 60 * 60 * 1000).toISOString()
-}
-function minutesAgo(m: number): string {
-  return new Date(Date.now() - m * 60 * 1000).toISOString()
 }
 function secondsAgo(s: number): string {
   return new Date(Date.now() - s * 1000).toISOString()
