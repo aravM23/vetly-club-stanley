@@ -81,18 +81,59 @@ export type DiscoverSettings = {
 }
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}/users/${DISCOVER_USER_ID}/discover${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
-  })
+  const url = `${API_BASE}/users/${DISCOVER_USER_ID}/discover${path}`
+  let res: Response
+  try {
+    res = await fetch(url, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(init?.headers ?? {}),
+      },
+    })
+  } catch (e) {
+    throw new Error(
+      `Network error reaching ${url} — is the FastAPI backend running? (${e instanceof Error ? e.message : String(e)})`
+    )
+  }
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body?.detail ?? `${res.status} ${res.statusText}`)
+    throw new Error(await formatHttpError(res, url))
   }
   return res.json() as Promise<T>
+}
+
+/**
+ * FastAPI returns `{detail: "..."}` for HTTPException and
+ * `{detail: [{loc, msg, type, ...}, ...]}` for validation errors. Both used
+ * to render as "[object Object]" because `new Error(arrayOrObject)` coerces
+ * via Object.prototype.toString. This produces a human-readable single line.
+ */
+async function formatHttpError(res: Response, url: string): Promise<string> {
+  const fallback = `${res.status} ${res.statusText} · ${url}`
+  let body: unknown
+  try {
+    body = await res.json()
+  } catch {
+    return fallback
+  }
+  if (body && typeof body === 'object' && 'detail' in body) {
+    const detail = (body as { detail: unknown }).detail
+    if (typeof detail === 'string') return `${res.status}: ${detail}`
+    if (Array.isArray(detail)) {
+      const lines = detail.map((d) => {
+        if (d && typeof d === 'object') {
+          const obj = d as Record<string, unknown>
+          const loc = Array.isArray(obj.loc) ? obj.loc.join('.') : ''
+          const msg = obj.msg ?? obj.message ?? JSON.stringify(d)
+          return loc ? `${loc}: ${msg}` : String(msg)
+        }
+        return String(d)
+      })
+      return `${res.status}: ${lines.join(' · ')}`
+    }
+    if (detail) return `${res.status}: ${JSON.stringify(detail)}`
+  }
+  return fallback
 }
 
 export const discoverApi = {

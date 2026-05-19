@@ -25,19 +25,42 @@ export type TrackedCreator = {
 }
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}/users/${TRACKED_USER_ID}/creators${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body?.detail ?? `${res.status} ${res.statusText}`)
+  const url = `${API_BASE}/users/${TRACKED_USER_ID}/creators${path}`
+  let res: Response
+  try {
+    res = await fetch(url, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(init?.headers ?? {}),
+      },
+    })
+  } catch (e) {
+    throw new Error(
+      `Network error reaching ${url} — is the FastAPI backend running? (${e instanceof Error ? e.message : String(e)})`
+    )
   }
-  // DELETE returns plain {status: "untracked"} which isn't a TrackedCreator;
-  // we still parse defensively.
+  if (!res.ok) {
+    let detailMsg = `${res.status} ${res.statusText} · ${url}`
+    try {
+      const body = (await res.json()) as { detail?: unknown }
+      if (body?.detail) {
+        if (typeof body.detail === 'string') detailMsg = `${res.status}: ${body.detail}`
+        else if (Array.isArray(body.detail))
+          detailMsg = `${res.status}: ${body.detail
+            .map((d) =>
+              d && typeof d === 'object'
+                ? `${(d as { loc?: unknown[] }).loc?.join?.('.') ?? ''}: ${(d as { msg?: string }).msg ?? JSON.stringify(d)}`
+                : String(d)
+            )
+            .join(' · ')}`
+        else detailMsg = `${res.status}: ${JSON.stringify(body.detail)}`
+      }
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detailMsg)
+  }
   if (res.status === 204) return undefined as unknown as T
   return res.json() as Promise<T>
 }
