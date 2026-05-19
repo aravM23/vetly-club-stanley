@@ -14,7 +14,9 @@ import type {
   DiscoverSettings,
 } from './discoverApi'
 
-const STORAGE_KEY = 'stan:demo:discover:v1'
+// Bump the version whenever the seed dataset materially changes; older
+// visitors auto-reseed instead of seeing stale data.
+const STORAGE_KEY = 'stan:demo:discover:v2'
 
 type StoreShape = {
   candidates: DiscoverCandidate[]
