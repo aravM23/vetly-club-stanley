@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import AuthPage from '@/pages/Auth'
 import DashboardPage from '@/pages/Dashboard'
 import DigestPage from '@/pages/Digest'
+import DiscoverPage from '@/pages/Discover'
 import ImportPage from '@/pages/Import'
 import SettingsPage from '@/pages/Settings'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -10,6 +11,12 @@ export default function App() {
   return (
     <Routes>
       <Route path="/auth" element={<AuthPage />} />
+      {/*
+        Discovery is intentionally a public route so the Stan FastAPI demo
+        works without needing Supabase credentials configured. The page talks
+        to the local FastAPI backend at /api (proxied by Vite).
+      */}
+      <Route path="/discover" element={<DiscoverPage />} />
       <Route
         path="/"
         element={
